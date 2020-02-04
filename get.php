@@ -35,7 +35,7 @@ for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
 	$pageHtml = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/page-' . $pageNum . '.html', $baseUrl . 'page/' . $pageNum . '/');
 	$items2 = readItems($pageHtml);
 	var_dump($items2);
-	$obj->items = array_merge($obj->items, $items['items']);
+	$obj->items = array_merge($obj->items, $items2['items']);
 }
 
 $obj->itemCount = count($obj->items);
@@ -59,7 +59,7 @@ border: 1px solid lightgrey;
 padding: 2px;
 }
 table td {
-text-align: right;
+text-align: left;
 border: 1px solid lightgrey;
 padding: 2px;
 
