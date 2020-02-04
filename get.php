@@ -45,14 +45,38 @@ function readItems($html) {
 	$crawler = new Crawler($html);
 	return array(
 		'items' => $crawler->filter('main section article.list--results.list-item')->each(function (Crawler $node, $i) {
-		    return array(
-			'url' => $node->filter('a')->first()->attr('href'),
-			'title' => $node->filter('h1')->first()->text('', true),
-			'description' => $node->filter('.list-item__desc')->first()->text('', true),
-			'footer_text' => $node->filter('.list-item__footer span')->each(function (Crawler $node, $i) {
+
+			$footer_text = $node->filter('.list-item__footer span')->each(function (Crawler $node, $i) {
 			    return $node->text('', true);
-			})
-		    );
+			});
+			$datoUttalelse = null;
+			$datoPublisert = null;
+			$sivilombudsmannenSaksnummer = null;
+			foreach ($footer_text as $text) {
+				if (str_starts_with($text, 'Dato for uttalelse: ')) {
+					$datoUttalelse = trim(substr($text, strlen('Dato for uttalese: ')));
+				}
+				elseif (str_starts_with($text, 'Saksnummer: ')) {
+					$sivilombudsmannenSaksnummer = trim(substr($text, strlen('Saksnummer: ')));
+				}
+				elseif (str_starts_with($text, 'Publisert: ')) {
+					$datoPublisert = trim(substr($text, strlen('Publisert: ')));
+				}
+				else {
+					var_dump($footer_text);
+					throw new Exception('Unknown: ' . $text);
+				}
+			}
+
+			return array(
+				'datoUttalelse' => $datoUttalelse,
+				'datoPublisert' => $datoPublisert,
+				'sivilombudsmannenSaksnummer' => $sivilombudsmannenSaksnummer,
+				'url' => $node->filter('a')->first()->attr('href'),
+				'title' => $node->filter('h1')->first()->text('', true),
+				'description' => $node->filter('.list-item__desc')->first()->text('', true),
+				'footer_text' => array()
+			);
 		}),
 		'pages' => $crawler->filter('.pagination__pages li')->each(function (Crawler $node, $i) {
 			return $node->text('', true);
