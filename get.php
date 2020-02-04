@@ -77,9 +77,8 @@ function readItems($html) {
 				'datoPublisert' => $datoPublisert,
 				'sivilombudsmannenSaksnummer' => $sivilombudsmannenSaksnummer,
 				'url' => $node->filter('a')->first()->attr('href'),
-				'title' => $node->filter('h1')->first()->text('', true),
-				'description' => $node->filter('.list-item__desc')->first()->text('', true),
-				'footer_text' => array()
+				'tittel' => $node->filter('h1')->first()->text('', true),
+				'beskrivelse' => $node->filter('.list-item__desc')->first()->text('', true)
 			);
 		}),
 		'pages' => $crawler->filter('.pagination__pages li')->each(function (Crawler $node, $i) {
