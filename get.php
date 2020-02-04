@@ -88,8 +88,8 @@ $html .= '
 			<th>Dato - uttalelse (publisert)</th>
 			<th>Saksnummer</th>
 			<th>Uttalelse</th>
-			<th>Tittel</th>
 			<th>Referanser til lov</th>
+			<th>Tittel</th>
 		</tr>
 	</thead>
 ';
@@ -102,10 +102,10 @@ foreach ($obj->items as $item) {
 	}
 	$lovReferanser = array();
 	if (count($item['tittel_lovRef']) > 0) {
-		$lovReferanser[] = '<b>Tittel:</b> ' . implode(', ', $item['tittel_lovRef']);
+		$lovReferanser[] = '<b>Lov ref. i tittel:</b><br>' . chr(10) . implode(',<br>' . chr(10), $item['tittel_lovRef']);
 	}
 	if (count($item['beskrivelse_lovRef']) > 0) {
-		$lovReferanser[] = '<b>Beskrivelse:</b> ' . implode(', ', $item['beskrivelse_lovRef']);
+		$lovReferanser[] = '<b>Lov ref. i beskrivelse:</b><br>' . chr(10) . implode(',<br>' . chr(10), $item['beskrivelse_lovRef']);
 	}
 
 	$html .= '
@@ -113,8 +113,8 @@ foreach ($obj->items as $item) {
 		<th>' . $item['datoUttalelse'] . ' <span style="font-weight: normal;">(' . $item['datoPublisert'] . ')</span></th>
 		<td>' . implode(',<br>' . chr(10), $urls) . '</td>
 		<td>[<a href="' . $item['url'] . '">Til uttalelse</a>]</td>
-		<td>' . $item['tittel'] . '</td>
 		<td>' . implode("<br><br>\n", $lovReferanser) . '</td>
+		<td>' . $item['tittel'] . '</td>
 	</tr>
 ';
 }
