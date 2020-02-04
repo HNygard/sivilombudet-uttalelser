@@ -107,6 +107,9 @@ foreach ($obj->items as $item) {
 	if (count($item['beskrivelse_lovRef']) > 0) {
 		$lovReferanser[] = '<b>Lov ref. i beskrivelse:</b><br>' . chr(10) . implode(',<br>' . chr(10), $item['beskrivelse_lovRef']);
 	}
+	if (count($item['uttalelse_lovRef']) > 0) {
+		$lovReferanser[] = '<b>Lov ref. i uttalelse:</b><br>' . chr(10) . implode(',<br>' . chr(10), $item['beskrivelse_lovRef']);
+	}
 
 	$html .= '
 	<tr>
@@ -130,6 +133,15 @@ function readItems($html) {
 	$crawler = new Crawler($html);
 	return array(
 		'items' => $crawler->filter('main section article.list--results.list-item')->each(function (Crawler $node, $i) {
+			$smUrl = $node->filter('a')->first()->attr('href');
+			if (!str_starts_with($smUrl, '')) {
+				throw new Exception('Unknown URL: ' . $smUrl);
+			}
+			$cacheFile = 'uttalelse-' . str_replace('https://', '', $smUrl) . '.html';
+			$cacheFile = str_replace('/', '---', $cacheFile);
+			global $cacheTimeSeconds, $cache_location;
+			$articleHtml = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/' . $cacheFile, $smUrl);
+			$crawlerArt = new Crawler($articleHtml);
 
 			$footer_text = $node->filter('.list-item__footer span')->each(function (Crawler $node, $i) {
 			    return $node->text('', true);
@@ -190,13 +202,15 @@ function readItems($html) {
 				'datoUttalelse' => $datoUttalelse,
 				'datoPublisert' => $datoPublisert,
 				'sivilombudsmannenSaksnummer' => $sivilombudsmannenSaksnummer,
-				'url' => $node->filter('a')->first()->attr('href'),
+				'url' => $smUrl,
 				'tittel' => $node->filter('h1')->first()->text('', true),
 				'beskrivelse' => $node->filter('.list-item__desc')->first()->text('', true),
 				'url-norske-postlister.no' => $npUrl,
+				'uttalelse' => $crawlerArt->filter('article')->first()->text('', true)
 			);
 			$item['tittel_lovRef'] = getLawReferencesFromText($item['tittel']);
 			$item['beskrivelse_lovRef'] = getLawReferencesFromText($item['beskrivelse']);
+			$item['uttalelse_lovRef'] = getLawReferencesFromText($item['uttalelse']);
 			return $item;
 		}),
 		'pages' => $crawler->filter('.pagination__pages li')->each(function (Crawler $node, $i) {
