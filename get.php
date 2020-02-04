@@ -17,6 +17,7 @@ use Symfony\Component\DomCrawler\Crawler;
 $cacheTimeSeconds = 60 * 60 * 24 * 4;
 $cache_location = __DIR__ . '/cache';
 $baseUrl = 'https://www.sivilombudsmannen.no/uttalelser/';
+$updateDate = date('H:i:s d.m.Y');
 
 mkdirIfNotExists($cache_location);
 
@@ -27,6 +28,7 @@ $obj = new stdClass();
 $lastPage = (int)end($items['pages']);
 $obj->pageCount = $lastPage;
 $obj->itemCount = 0;
+$obj->lastUpdated = $updateDate;
 $obj->items = $items['items'];
 
 for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
@@ -39,6 +41,63 @@ for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
 $obj->itemCount = count($obj->items);
 
 file_put_contents(__DIR__ . '/uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
+
+
+function htmlHeading($title = 'Sivilombudsmannens uttalelser') {
+    return "<!DOCTYPE html>
+<html>
+<head>
+  <meta charset=\"UTF-8\">
+  <title>$title</title>
+</head>
+<body>
+<style>
+table th {
+text-align: left;
+max-width: 300px;
+border: 1px solid lightgrey;
+padding: 2px;
+}
+table td {
+text-align: right;
+border: 1px solid lightgrey;
+padding: 2px;
+
+}
+table {
+border-collapse: collapse;
+}
+</style>";
+}
+
+$html = htmlHeading() . "
+
+<h1>Sivilombudsmannens uttalelser</h1>\n";
+$html .= "Laget av <a href='https://twitter.com/hallny'>@hallny</a> / <a href='https://norske-postlister.no'>Norske-postlister.no</a><br>\n";
+$html .= "<a href='https://github.com/HNygard/sivilombudsmannen-uttalelser/'>Kildekode for oppdatering av denne lista</a> (Github)<br><br>\n\n";
+$html .= '
+<ul>
+	<li>Antall uttalelser: ' . $obj->itemCount . '</li>
+	<li>Liste sist oppdatert: ' . $updateDate . '</li>
+	<li>Kilde: <a href="' . $baseUrl . '">' . $baseUrl . '</a></li>
+</ul>
+
+<table>
+';
+foreach ($obj->items as $item) {
+$html .= '
+	<tr>
+		<th>'. $item['datoUttalelse'] . ' <span style="font-weight: normal;">(' . $item['datoPublisert'] . ')</span></th>
+		<td>' . $item['tittel'] . '</td>
+	</tr>
+';
+}
+
+$html .= '
+</table>
+';
+
+file_put_contents(__DIR__ . '/docs/index.html', $html);
 
 
 function readItems($html) {
