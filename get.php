@@ -123,7 +123,7 @@ $html .= '
 </table>
 ';
 
-file_put_contents(__DIR__ . '/docs/index.html', $html);
+file_put_contents(__DIR__ . '/index.html', $html);
 
 
 function readItems($html) {
