@@ -1,0 +1,151 @@
+<?php
+/**
+ * This script downloads all uttalelser from Sivilombudsmannen
+ *
+ * Based on code from Norske-postlister.no
+ *
+ * @author Hallvard Nygård, @hallny
+ */
+
+set_error_handler(function ($errno, $errstr, $errfile, $errline, array $errcontext) {
+    throw new ErrorException($errstr, 0, $errno, $errfile, $errline);
+});
+
+require __DIR__ . '/vendor/autoload.php';
+use Symfony\Component\DomCrawler\Crawler;
+
+$cacheTimeSeconds = 60 * 60 * 4;
+$cache_location = __DIR__ . '/cache';
+$baseUrl = 'https://www.sivilombudsmannen.no/uttalelser/';
+
+mkdirIfNotExists($cache_location);
+
+$mainPage = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/page-0.html', $baseUrl);
+$items = readItems($mainPage);
+
+var_dump($items);
+
+
+function readItems($html) {
+	$crawler = new Crawler($html);
+	return array(
+		'items' => $crawler->filter('main section article.list--results.list-item')->each(function (Crawler $node, $i) {
+		    return array(
+			'url' => $node->filter('a')->first()->attr('href'),
+			'title' => $node->filter('h1')->first()->text('', true),
+			'description' => $node->filter('.list-item__desc')->first()->text('', true),
+			'footer_text' => $node->filter('.list-item__footer span')->each(function (Crawler $node, $i) {
+			    return $node->text('', true);
+			})
+		    );
+		})
+	);
+}
+
+function getUrlCachedUsingCurl($cacheTimeSeconds, $cache_file, $baseUri, $acceptContentType = '') {
+    if (file_exists($cache_file) && (time() - filemtime($cache_file)) < $cacheTimeSeconds) {
+        return file_get_contents($cache_file);
+    }
+    logInfo('   - GET ' . $baseUri);
+    $ci = curl_init();
+    curl_setopt($ci, CURLOPT_URL, $baseUri);
+    curl_setopt($ci, CURLOPT_TIMEOUT, 200);
+    curl_setopt($ci, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ci, CURLOPT_FORBID_REUSE, 0);
+    curl_setopt($ci, CURLOPT_CUSTOMREQUEST, 'GET');
+    curl_setopt($ci, CURLOPT_HEADER, 1);
+    $headers = array(
+    );
+    if ($acceptContentType != '') {
+        $headers[] = 'Accept: ' . $acceptContentType;
+    }
+    curl_setopt($ci, CURLOPT_HTTPHEADER, $headers);
+    $response = curl_exec($ci);
+    if ($response === false) {
+        throw new Exception(curl_error($ci), curl_errno($ci));
+    }
+
+    $header_size = curl_getinfo($ci, CURLINFO_HEADER_SIZE);
+    $header = substr($response, 0, $header_size);
+    $body = substr($response, $header_size);
+    curl_close($ci);
+
+    logInfo('   Response size: ' . strlen($body));
+
+    if (!str_starts_with($header, 'HTTP/1.1 200 OK')) {
+        if (str_starts_with($header, 'HTTP/1.1 404 Not Found') && file_exists($cache_file)) {
+            logInfo('  -> 404 Not Found. Using cache.');
+            return file_get_contents($cache_file);
+        }
+        logInfo('--------------------------------------------------------------' . chr(10)
+            . $body . chr(10) . chr(10)
+            . '--------------------------------------------------------------' . chr(10)
+            . $header . chr(10) . chr(10)
+            . '--------------------------------------------------------------');
+        throw new Exception('Server did not respond with 200 OK.' . chr(10)
+            . 'URL ...... : ' . $baseUri . chr(10)
+            . 'Status ... : ' . explode(chr(10), $header)[0]
+        );
+    }
+
+    if (trim($body) == '') {
+        throw new Exception('Empty response.');
+    }
+    file_put_contents($cache_file, $body);
+    return $body;
+}
+
+function str_starts_with($haystack, $needle) {
+    return substr($haystack, 0, strlen($needle)) == $needle;
+}
+
+function str_ends_with($haystack, $needle) {
+    $length = strlen($needle);
+    return $length === 0 || substr($haystack, -$length) === $needle;
+}
+
+function str_contains($stack, $needle) {
+    return (strpos($stack, $needle) !== FALSE);
+}
+
+function logDebug($string) {
+    //logLine($string, 'DEBUG');
+}
+
+function logInfo($string) {
+    logLine($string, 'INFO');
+}
+
+function logError($string) {
+    logLine($string, 'ERROR');
+}
+
+function logLine($string, $log_level) {
+    global $run_key;
+    echo date('Y-m-d H:i:s') . ' ' . $log_level . ' --- ' . $string . chr(10);
+
+    if (isset($run_key) && !empty($run_key)) {
+        // -> Download runner
+        global $entity, $argv, $download_logs_directory;
+        global $last_method;
+        $line = new stdClass();
+        $line->timestamp = time();
+        $line->level = $log_level;
+        $line->downloader = $argv[2];
+        if (isset($entity) && isset($entity->entityId)) {
+            $line->entity_id = $entity->entityId;
+        }
+        $line->last_method = $last_method;
+        $line->message = $string;
+        // Disabled.
+        //file_put_contents($download_logs_directory . '/' . $run_key . '.json', json_encode($line) . chr(10), FILE_APPEND);
+    }
+}
+
+
+function mkdirIfNotExists($dir) {
+    if(!file_exists($dir)) {
+        mkdir($dir, 0777, true);
+    }
+}
+
