@@ -14,16 +14,31 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline, array $errconte
 require __DIR__ . '/vendor/autoload.php';
 use Symfony\Component\DomCrawler\Crawler;
 
-$cacheTimeSeconds = 60 * 60 * 4;
+$cacheTimeSeconds = 60 * 60 * 24 * 4;
 $cache_location = __DIR__ . '/cache';
 $baseUrl = 'https://www.sivilombudsmannen.no/uttalelser/';
 
 mkdirIfNotExists($cache_location);
 
-$mainPage = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/page-0.html', $baseUrl);
+$mainPage = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/page-1.html', $baseUrl);
 $items = readItems($mainPage);
 
-var_dump($items);
+$obj = new stdClass();
+$lastPage = (int)end($items['pages']);
+$obj->pageCount = $lastPage;
+$obj->itemCount = 0;
+$obj->items = $items['items'];
+
+for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
+	$pageHtml = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/page-' . $pageNum . '.html', $baseUrl . 'page/' . $pageNum . '/');
+	$items2 = readItems($pageHtml);
+	var_dump($items2);
+	$obj->items = array_merge($obj->items, $items['items']);
+}
+
+$obj->itemCount = count($obj->items);
+
+file_put_contents(__DIR__ . '/uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
 
 
 function readItems($html) {
@@ -38,6 +53,9 @@ function readItems($html) {
 			    return $node->text('', true);
 			})
 		    );
+		}),
+		'pages' => $crawler->filter('.pagination__pages li')->each(function (Crawler $node, $i) {
+			return $node->text('', true);
 		})
 	);
 }
