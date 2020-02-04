@@ -54,13 +54,17 @@ function readItems($html) {
 			$sivilombudsmannenSaksnummer = null;
 			foreach ($footer_text as $text) {
 				if (str_starts_with($text, 'Dato for uttalelse: ')) {
-					$datoUttalelse = trim(substr($text, strlen('Dato for uttalese: ')));
+					$datoUttalelse = explode('.', trim(substr($text, strlen('Dato for uttalese: '))));
+					$datoUttalelse = mktime(0, 0, 0, $datoUttalelse[1], $datoUttalelse[0], $datoUttalelse[2]);
+					$datoUttalelse = date('d.m.Y', $datoUttalelse);
 				}
 				elseif (str_starts_with($text, 'Saksnummer: ')) {
 					$sivilombudsmannenSaksnummer = trim(substr($text, strlen('Saksnummer: ')));
 				}
 				elseif (str_starts_with($text, 'Publisert: ')) {
-					$datoPublisert = trim(substr($text, strlen('Publisert: ')));
+					$datoPublisert = explode('.', trim(substr($text, strlen('Publisert: '))));
+					$datoPublisert = mktime(0, 0, 0, $datoPublisert[1], $datoPublisert[0], $datoPublisert[2]);
+					$datoPublisert = date('d.m.Y', $datoPublisert);
 				}
 				else {
 					var_dump($footer_text);
