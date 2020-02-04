@@ -53,19 +53,20 @@ function htmlHeading($title = 'Sivilombudsmannens uttalelser') {
 <body>
 <style>
 table th {
-text-align: left;
-max-width: 300px;
-border: 1px solid lightgrey;
-padding: 2px;
+	text-align: left;
+	max-width: 300px;
+	border: 1px solid lightgrey;
+	padding: 2px;
+	white-space: nowrap;
 }
 table td {
-text-align: left;
-border: 1px solid lightgrey;
-padding: 2px;
-
+	text-align: left;
+	border: 1px solid lightgrey;
+	padding: 2px;
+	white-space: nowrap;
 }
 table {
-border-collapse: collapse;
+	border-collapse: collapse;
 }
 </style>";
 }
@@ -83,11 +84,27 @@ $html .= '
 </ul>
 
 <table>
+	<thead>
+		<tr>
+			<th>Dato - uttalelse (publisert)</th>
+			<th>Saksnummer</th>
+			<th>Uttalelse</th>
+			<th>Tittel</th>
+		</tr>
+	</thead>
 ';
 foreach ($obj->items as $item) {
-$html .= '
+	$urls = array();
+	if ($item['url-norske-postlister.no'] != null) {
+		foreach ($item['url-norske-postlister.no'] as $caseNum => $url) {
+			$urls[] = '<a href="'.$url.'"><img src="https://norske-postlister.no/favicon-16x16.png"> ' . $caseNum . '</a>';
+		}
+	}
+	$html .= '
 	<tr>
-		<th>'. $item['datoUttalelse'] . ' <span style="font-weight: normal;">(' . $item['datoPublisert'] . ')</span></th>
+		<th>' . $item['datoUttalelse'] . ' <span style="font-weight: normal;">(' . $item['datoPublisert'] . ')</span></th>
+		<td>' . implode(',<br>' . chr(10), $urls) . '</td>
+		<td>[<a href="' . $item['url'] . '">Til uttalelse</a>]</td>
 		<td>' . $item['tittel'] . '</td>
 	</tr>
 ';
@@ -111,6 +128,7 @@ function readItems($html) {
 			$datoUttalelse = null;
 			$datoPublisert = null;
 			$sivilombudsmannenSaksnummer = null;
+			$npUrl = null;
 			foreach ($footer_text as $text) {
 				if (str_starts_with($text, 'Dato for uttalelse: ')) {
 					$datoUttalelse = explode('.', trim(substr($text, strlen('Dato for uttalese: '))));
@@ -118,7 +136,35 @@ function readItems($html) {
 					$datoUttalelse = date('d.m.Y', $datoUttalelse);
 				}
 				elseif (str_starts_with($text, 'Saksnummer: ')) {
+					$text = str_replace('Saksnummer: 12/', 'Saksnummer: 2012/', $text);
+					$text = str_replace('Saksnummer: 209/2897', 'Saksnummer: 2009/2897', $text);
+					$text = str_replace('Saksnummer: 9/', 'Saksnummer: 2009/', $text);
+					$text = str_replace('Saksnummer: 8/', 'Saksnummer: 2008/', $text);
+					$text = str_replace('Saksnummer: 7/', 'Saksnummer: 2007/', $text);
 					$sivilombudsmannenSaksnummer = trim(substr($text, strlen('Saksnummer: ')));
+
+					// Clean up content
+					$sivilombudsmannenSaksnummer2 = str_replace('sak ', '', $sivilombudsmannenSaksnummer);
+					$sivilombudsmannenSaksnummer2 = str_replace('Sak ', '', $sivilombudsmannenSaksnummer2);
+					$sivilombudsmannenSaksnummer2 = str_replace('tidl.', '', $sivilombudsmannenSaksnummer2);
+					$sivilombudsmannenSaksnummer2 = str_replace('tidligere ', '', $sivilombudsmannenSaksnummer2);
+					$sivilombudsmannenSaksnummer2 = str_replace(' og ', ' ', $sivilombudsmannenSaksnummer2);
+					$sivilombudsmannenSaksnummer2 = str_replace(', ', ' ', $sivilombudsmannenSaksnummer2);
+					$sivilombudsmannenSaksnummer2 = str_replace('(', '', $sivilombudsmannenSaksnummer2);
+					$sivilombudsmannenSaksnummer2 = str_replace(')', '', $sivilombudsmannenSaksnummer2);
+					$npUrl = array();
+					foreach (explode(' ', $sivilombudsmannenSaksnummer2) as $caseNum) {
+						$caseNum = trim($caseNum);
+						preg_match('/^(([0-9]{4})\/([0-9]*)(\-[0-9]*)?)$/', $caseNum, $matches);
+						if (!isset($matches[1])) {
+							var_dump($footer_text);
+							var_dump($sivilombudsmannenSaksnummer);
+							var_dump($sivilombudsmannenSaksnummer2);
+							var_dump($caseNum);
+						}
+						$npUrl[$matches[1]]
+							= 'https://norske-postlister.no/sak/sivilombudsmannen/' . $matches[2] . '/' . $matches[3];
+					}
 				}
 				elseif (str_starts_with($text, 'Publisert: ')) {
 					$datoPublisert = explode('.', trim(substr($text, strlen('Publisert: '))));
@@ -137,7 +183,8 @@ function readItems($html) {
 				'sivilombudsmannenSaksnummer' => $sivilombudsmannenSaksnummer,
 				'url' => $node->filter('a')->first()->attr('href'),
 				'tittel' => $node->filter('h1')->first()->text('', true),
-				'beskrivelse' => $node->filter('.list-item__desc')->first()->text('', true)
+				'beskrivelse' => $node->filter('.list-item__desc')->first()->text('', true),
+				'url-norske-postlister.no' => $npUrl,
 			);
 		}),
 		'pages' => $crawler->filter('.pagination__pages li')->each(function (Crawler $node, $i) {
