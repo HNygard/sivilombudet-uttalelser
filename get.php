@@ -34,7 +34,6 @@ $obj->items = $items['items'];
 for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
 	$pageHtml = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/page-' . $pageNum . '.html', $baseUrl . 'page/' . $pageNum . '/');
 	$items2 = readItems($pageHtml);
-	var_dump($items2);
 	$obj->items = array_merge($obj->items, $items2['items']);
 }
 
@@ -90,6 +89,7 @@ $html .= '
 			<th>Saksnummer</th>
 			<th>Uttalelse</th>
 			<th>Tittel</th>
+			<th>Referanser til lov</th>
 		</tr>
 	</thead>
 ';
@@ -100,12 +100,21 @@ foreach ($obj->items as $item) {
 			$urls[] = '<a href="'.$url.'"><img src="https://norske-postlister.no/favicon-16x16.png"> ' . $caseNum . '</a>';
 		}
 	}
+	$lovReferanser = array();
+	if (count($item['tittel_lovRef']) > 0) {
+		$lovReferanser[] = '<b>Tittel:</b> ' . implode(', ', $item['tittel_lovRef']);
+	}
+	if (count($item['beskrivelse_lovRef']) > 0) {
+		$lovReferanser[] = '<b>Beskrivelse:</b> ' . implode(', ', $item['beskrivelse_lovRef']);
+	}
+
 	$html .= '
 	<tr>
 		<th>' . $item['datoUttalelse'] . ' <span style="font-weight: normal;">(' . $item['datoPublisert'] . ')</span></th>
 		<td>' . implode(',<br>' . chr(10), $urls) . '</td>
 		<td>[<a href="' . $item['url'] . '">Til uttalelse</a>]</td>
 		<td>' . $item['tittel'] . '</td>
+		<td>' . implode("<br><br>\n", $lovReferanser) . '</td>
 	</tr>
 ';
 }
@@ -177,7 +186,7 @@ function readItems($html) {
 				}
 			}
 
-			return array(
+			$item = array(
 				'datoUttalelse' => $datoUttalelse,
 				'datoPublisert' => $datoPublisert,
 				'sivilombudsmannenSaksnummer' => $sivilombudsmannenSaksnummer,
@@ -186,11 +195,177 @@ function readItems($html) {
 				'beskrivelse' => $node->filter('.list-item__desc')->first()->text('', true),
 				'url-norske-postlister.no' => $npUrl,
 			);
+			$item['tittel_lovRef'] = getLawReferencesFromText($item['tittel']);
+			$item['beskrivelse_lovRef'] = getLawReferencesFromText($item['beskrivelse']);
+			return $item;
 		}),
 		'pages' => $crawler->filter('.pagination__pages li')->each(function (Crawler $node, $i) {
 			return $node->text('', true);
 		})
 	);
+}
+
+function getLawReferencesFromText($text) {
+	$lawRefs = array();
+	$text = strtolower($text);
+
+	$laws = array(
+		array(
+			'name' => 'Lov om behandlingsmåten i forvaltningssaker (forvaltningsloven)',
+			'nicknames' => array(
+				'forvaltningsloven',
+				'fvl.',
+				'forvaltningsloven (fvl.)',
+			),
+			'link' => 'https://lovdata.no/dokument/NL/lov/1967-02-10'
+		),
+		array(
+			'name' => 'Lov om rett til innsyn i dokument i offentleg verksemd (offentleglova)',
+			'shortName' => 'offentleglova',
+			'nicknames' => array(
+				'offentleglova',
+				'offentlighetsloven',
+			),
+			'link' => 'https://lovdata.no/dokument/NL/lov/2006-05-19-16'
+		),
+		array(
+			'name' => 'Lov om grunnskolen og den vidaregåande opplæringa (opplæringslova)',
+			'nicknames' => array(
+				'opplæringslova'
+			),
+			'link' => 'https://lovdata.no/dokument/NL/lov/1998-07-17-61'
+		),
+		array(
+			'name' => 'Lov om eigedomsskatt til kommunane (eigedomsskattelova)',
+			'nicknames' => array(
+				'eigedomsskattelova'
+			),
+			'link' => 'https://lovdata.no/dokument/NL/lov/1975-06-06-29'
+		),
+		array(
+			'nicknames' => array(
+				'voldsoffererstatningsloven',
+				'sosialtjenesteloven',
+				'politiregisterloven',
+				'politiregisterforskriften',
+				'konsesjonsloven',
+				'pasient- og brukerrettighetsloven',
+				'utlendingsloven',
+				'utlendingsforskriften',
+				'utlendingsforskrift',
+				'inkassoloven',
+				'inkassoforskriftens',
+				'vegtrafikkloven',
+				'sivilombudsmannsloven',
+				'sivilombudsmannen',
+				'ombudsmannsloven',
+				'sivilombudsmannsinstruksen',
+				'kommuneloven',
+				'forskrift om parkeringstillatelse for forflytningshemmede',
+				'plan- og bygningsloven',
+				'plan- og bygningsloven (plbl.)',
+				'plbl.',
+				'psykisk helsevernloven',
+				'helsepersonelloven',
+				'pasientreiseforskriften',
+				'spesialisthelsetjenesteloven',
+				'barnehageloven',
+				'vergemålsloven',
+				'grunnloven',
+				'dimensjoneringsforskriften',
+				'folketrygdloven',
+				'merverdiavgiftsloven',
+				'vergemålsforskriften',
+'kulturminneloven',
+'forurensningsloven',
+'skatteloven',
+'universitetsloven',
+'straffegjennomføringsloven',
+'legemiddelloven',
+'ligningsloven',
+'tinglysingsloven',
+'særavgiftsforskriften',
+'strukturkvoteforskriften',
+'finnmarksloven',
+'dokumentavgiftsloven',
+'barnelova',
+'barneloven',
+'forskrift om arbeidsmarkedstiltak',
+'produktkontrolloven',
+'forsvarspersonelloven',
+'børsloven',
+'reindriftsloven',
+'barnevernloven',
+'offentlegforskrifta',
+'trafikkopplæringsforskriften',
+'konkurranseloven',
+'delingsloven',
+'arbeidsmiljøloven',
+
+/*
+				// Contextual references
+				'vilkårene i',
+				'jf.',
+				' i',
+				'etter forskriften',
+				'forståelse og anvendelse av',
+				'sningsåret 2018 – 2019',
+				'er i strid med',
+				'jf. forskriften',
+				'jf. samme lovs',
+*/
+			)
+		)
+	);
+	foreach ($laws as $law) {
+		foreach ($law['nicknames'] as $nick) {
+			// TEST DATA:
+			// forvaltningsloven § 24 første ledd
+			// forvaltningsloven § 34 annet ledd annet punktum
+			// offentleglova § 29 første ledd
+			// opplæringslova § 9 A-11
+			// eigedomsskattelova § 5 første ledd bokstav h
+			// politiregisterforskriften § 53-8
+			// inkassolovens § 9
+			// inkassoforskriftens § 1-2
+			// offentleglova § 5 første ledd og § 24 første ledd
+			// kommuneloven § 40 nr. 3 bokstav c første ledd
+			$regex = '/((' . preg_quote($nick) . 's?) ?§ ?[0-9]*(\-[0-9]*)*( [A-ZÆØÅ]\-[0-9]*)?( nr\. [0-9]*)?( [a-zæøå]* ledd)?( [a-zæøå]* punktum)?( bokstav [a-zæøå]*)?( [a-zæøå]* ledd)?)/';
+			preg_match($regex, $text, $matches);
+			while (isset($matches[1])) {
+				if (isset($law['shortName'])) {
+					// Use common short name
+					$lawRefs[] = str_replace($matches[2], $law['shortName'], $matches[1]);
+				}
+				else {
+					$lawRefs[] = $matches[1];
+				}
+				$text = str_replace($matches[1], $nick, $text);
+				$text = str_replace($nick . ' og ', $nick . ' ', $text);
+				preg_match($regex, $text, $matches);
+			}
+
+			// offentleglova §§ 14 og 15
+			$regex = '/(' . $nick . ' §§ [0-9]* og [0-9]*)/';
+			preg_match($regex, $text, $matches);
+			while (isset($matches[1])) {
+				$lawRefs[] = $matches[1];
+				$text = str_replace($matches[1], '', $text);
+				preg_match($regex, $text, $matches);
+			}
+		}
+	}
+
+	if (str_contains($text, '§')) {
+		while (str_contains($text, '§')) {
+			$start = max(0, strpos($text, '§') - 50);
+			echo substr($text, $start, min(strlen($text) - $start, strpos($text, '§') + 100 - $start)) . "\n";
+			$text = substr($text, strpos($text, '§') + 1);
+		}
+		//throw new Exception('Law reference not picked up.');
+	}
+
+	return $lawRefs;
 }
 
 function getUrlCachedUsingCurl($cacheTimeSeconds, $cache_file, $baseUri, $acceptContentType = '') {
