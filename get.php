@@ -246,6 +246,7 @@ function getLawReferencesFromText($text) {
 	$laws = array(
 		array(
 			'name' => 'Lov om behandlingsmåten i forvaltningssaker (forvaltningsloven)',
+			'shortName' => 'forvaltningsloven',
 			'nicknames' => array(
 				'forvaltningsloven',
 				'fvl.',
@@ -277,6 +278,16 @@ function getLawReferencesFromText($text) {
 			'link' => 'https://lovdata.no/dokument/NL/lov/1975-06-06-29'
 		),
 		array(
+			'name' => 'Lov om planlegging og byggesaksbehandling (plan- og bygningsloven)',
+			'shortName' => 'plan- og bygningsloven',
+			'nicknames' => array(
+				'plan- og bygningsloven',
+				'plan- og bygningsloven (plbl.)',
+				'plbl.',
+			),
+			'link' => 'https://lovdata.no/dokument/NL/lov/2008-06-27-71'
+		),
+		array(
 			'nicknames' => array(
 				'voldsoffererstatningsloven',
 				'sosialtjenesteloven',
@@ -296,9 +307,6 @@ function getLawReferencesFromText($text) {
 				'sivilombudsmannsinstruksen',
 				'kommuneloven',
 				'forskrift om parkeringstillatelse for forflytningshemmede',
-				'plan- og bygningsloven',
-				'plan- og bygningsloven (plbl.)',
-				'plbl.',
 				'psykisk helsevernloven',
 				'helsepersonelloven',
 				'pasientreiseforskriften',
