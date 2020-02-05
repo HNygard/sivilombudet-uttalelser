@@ -95,28 +95,37 @@ $html .= '
 ';
 foreach ($obj->items as $item) {
 	$urls = array();
+	$saksnummer = array();
 	if ($item['url-norske-postlister.no'] != null) {
 		foreach ($item['url-norske-postlister.no'] as $caseNum => $url) {
-			$urls[] = '<a href="'.$url.'"><img src="https://norske-postlister.no/favicon-16x16.png"> ' . $caseNum . '</a>';
+			$urls[] = '<a href="'.$url.'"><img src="https://norske-postlister.no/favicon-16x16.png"> SM-' . $caseNum . '</a>';
+			$saksnummer[] = 'SM-' . $caseNum;
 		}
 	}
 	$lovReferanser = array();
 	if (count($item['tittel_lovRef']) > 0) {
-		$lovReferanser[] = '<b>Lov ref. i tittel:</b><br>' . chr(10) . implode(',<br>' . chr(10), $item['tittel_lovRef']);
+		foreach($item['tittel_lovRef'] as $lovRef) {
+			$lovReferanser[$lovRef] = $lovRef;
+		}
 	}
 	if (count($item['beskrivelse_lovRef']) > 0) {
-		$lovReferanser[] = '<b>Lov ref. i beskrivelse:</b><br>' . chr(10) . implode(',<br>' . chr(10), $item['beskrivelse_lovRef']);
+		foreach($item['beskrivelse_lovRef'] as $lovRef) {
+			$lovReferanser[$lovRef] = $lovRef;
+		}
 	}
 	if (count($item['uttalelse_lovRef']) > 0) {
-		$lovReferanser[] = '<b>Lov ref. i uttalelse:</b><br>' . chr(10) . implode(',<br>' . chr(10), $item['beskrivelse_lovRef']);
+		foreach($item['uttalelse_lovRef'] as $lovRef) {
+			$lovReferanser[$lovRef] = $lovRef;
+		}
 	}
+	ksort($lovReferanser);
 
 	$html .= '
 	<tr>
 		<th>' . $item['datoUttalelse'] . ' <span style="font-weight: normal;">(' . $item['datoPublisert'] . ')</span></th>
 		<td>' . implode(',<br>' . chr(10), $urls) . '</td>
 		<td>[<a href="' . $item['url'] . '">Til uttalelse</a>]</td>
-		<td>' . implode("<br><br>\n", $lovReferanser) . '</td>
+		<td>' . implode("<br>\n", $lovReferanser) . '</td>
 		<td>' . $item['tittel'] . '</td>
 	</tr>
 ';
