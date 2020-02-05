@@ -403,7 +403,8 @@ function getLawReferencesFromText($text) {
 // 146
 'straffeprosessloven',
 
-
+'allmennaksjeloven',
+'aksjeloven',
 
 /*
 				// Contextual references
