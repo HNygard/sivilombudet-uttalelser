@@ -19,6 +19,8 @@ $cache_location = __DIR__ . '/cache';
 $baseUrl = 'https://www.sivilombudsmannen.no/uttalelser/';
 $updateDate = date('H:i:s d.m.Y');
 
+$lawsNotPresent = array();
+
 mkdirIfNotExists($cache_location);
 
 $mainPage = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/page-1.html', $baseUrl);
@@ -41,6 +43,14 @@ $obj->itemCount = count($obj->items);
 
 file_put_contents(__DIR__ . '/sivilombudsmannen-uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
 
+ksort($lawsNotPresent);
+foreach ($lawsNotPresent as $word => $count) {
+	if ($count < 100) {
+		continue;
+	}
+	echo "// $count\n";
+	echo "'$word',\n";
+}
 
 function htmlHeading($title = 'Sivilombudsmannens uttalelser') {
     return "<!DOCTYPE html>
@@ -260,6 +270,7 @@ function getLawReferencesFromText($text) {
 			'nicknames' => array(
 				'offentleglova',
 				'offentlighetsloven',
+				'offentlighetslov',
 			),
 			'link' => 'https://lovdata.no/dokument/NL/lov/2006-05-19-16'
 		),
@@ -290,6 +301,10 @@ function getLawReferencesFromText($text) {
 		array(
 			'nicknames' => array(
 				'voldsoffererstatningsloven',
+				'voldsoffererstatningsforskriften',
+				'voel.',
+				'voldsofferstatningsloven',
+
 				'sosialtjenesteloven',
 				'politiregisterloven',
 				'politiregisterforskriften',
@@ -343,6 +358,43 @@ function getLawReferencesFromText($text) {
 'konkurranseloven',
 'delingsloven',
 'arbeidsmiljøloven',
+'yrkesbefalloven',
+// 1
+'yrkeskadeforsikringsloven',
+// 3
+'yrkesskadeforsikringsloven',
+// 4
+'yrkestransporforskriften',
+// 34
+'yrkestransportforskriften',
+// 83
+'yrkestransportlova',
+// 17
+'yrkestransportloven',
+'våpenloven',
+'våpenforskriften',
+
+'viltloven',
+'trossamfunnsloven',
+'opplæringsforskriften',
+
+'oppll',
+'opplæringsloven',
+
+'pasientjournalloven',
+// 9
+'pasientrettighetsloven',
+// 11
+'pasientskadeloven',
+'passloven',
+'omsorgstjenesteloven',
+'naturmangfoldloven',
+// 21
+'naturskadeloven',
+// 17
+'nav-loven',
+'kommunehelsetjenesteloven',
+
 
 /*
 				// Contextual references
@@ -402,6 +454,14 @@ function getLawReferencesFromText($text) {
 		while (str_contains($text, '§')) {
 			$start = max(0, strpos($text, '§') - 50);
 			echo substr($text, $start, min(strlen($text) - $start, strpos($text, '§') + 100 - $start)) . "\n";
+			$textBeforeParagraf = trim(substr($text, 0, strpos($text, '§')));
+			$wordBefore = trim(strrchr($textBeforeParagraf, ' '));
+			echo "\t\t$wordBefore\n";
+			global $lawsNotPresent;
+			if (!isset($lawsNotPresent[$wordBefore])) {
+				$lawsNotPresent[$wordBefore] = 0;
+			}
+			$lawsNotPresent[$wordBefore]++;
 			$text = substr($text, strpos($text, '§') + 1);
 		}
 		//throw new Exception('Law reference not picked up.');
