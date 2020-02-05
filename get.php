@@ -39,7 +39,7 @@ for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
 
 $obj->itemCount = count($obj->items);
 
-file_put_contents(__DIR__ . '/uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
+file_put_contents(__DIR__ . '/sivilombudsmannen-uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
 
 
 function htmlHeading($title = 'Sivilombudsmannens uttalelser') {
@@ -80,6 +80,8 @@ $html .= '
 	<li>Antall uttalelser: ' . $obj->itemCount . '</li>
 	<li>Liste sist oppdatert: ' . $updateDate . '</li>
 	<li>Kilde: <a href="' . $baseUrl . '">' . $baseUrl . '</a></li>
+	<li>JSON-format: <a href="./sivilombudsmannen-uttalelser.json">sivilombudsmannen-uttalelser.json</a></li>
+	<li>CSV-format (Excel): <a href="./sivilombudsmannen-uttalelser.csv">sivilombudsmannen-uttalelser.csv</a></li>
 </ul>
 
 <table>
@@ -93,6 +95,8 @@ $html .= '
 		</tr>
 	</thead>
 ';
+$csv = "Datasett hentet fra;https://hnygard.github.io/sivilombudsmannen-uttalelser/;@hallny / Norske-postlister.no;Kilde;$baseUrl;Data hentet;$updateDate\n";
+$csv .= "Dato - uttalelse;Dato - publisert;Saksnummer;Lenke uttalelse;Lovreferanse;Tittel\n";
 foreach ($obj->items as $item) {
 	$urls = array();
 	$saksnummer = array();
@@ -129,6 +133,12 @@ foreach ($obj->items as $item) {
 		<td>' . $item['tittel'] . '</td>
 	</tr>
 ';
+	$csv .= $item['datoUttalelse'] . ';'
+		. $item['datoPublisert'] . ';'
+		. implode(', ', $saksnummer) . ';'
+		. $item['url'] . ';'
+		. implode(', ', $lovReferanser) . ';'
+		. str_replace(';', ':', $item['tittel']) . "\n";
 }
 
 $html .= '
@@ -136,6 +146,7 @@ $html .= '
 ';
 
 file_put_contents(__DIR__ . '/index.html', $html);
+file_put_contents(__DIR__ . '/sivilombudsmannen-uttalelser.csv', $csv);
 
 
 function readItems($html) {
