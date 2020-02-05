@@ -17,7 +17,7 @@ use Symfony\Component\DomCrawler\Crawler;
 $cacheTimeSeconds = 60 * 60 * 24 * 4;
 $cache_location = __DIR__ . '/cache';
 $baseUrl = 'https://www.sivilombudsmannen.no/uttalelser/';
-$updateDate = date('H:i:s d.m.Y');
+$updateDate = date('d.m.Y H:i:s');
 
 $lawsNotPresent = array();
 
@@ -31,6 +31,7 @@ $lastPage = (int)end($items['pages']);
 $obj->pageCount = $lastPage;
 $obj->itemCount = 0;
 $obj->lastUpdated = $updateDate;
+$obj->sourceInfo = "Datasett hentet fra https://hnygard.github.io/sivilombudsmannen-uttalelser/, laget av @hallny / Norske-postlister.no. Kilde: $baseUrl";
 $obj->items = $items['items'];
 
 for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
@@ -394,6 +395,14 @@ function getLawReferencesFromText($text) {
 // 17
 'nav-loven',
 'kommunehelsetjenesteloven',
+
+// 123
+'politiloven',
+// 104
+'statsborgerloven',
+// 146
+'straffeprosessloven',
+
 
 
 /*
