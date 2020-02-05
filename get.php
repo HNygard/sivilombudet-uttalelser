@@ -405,6 +405,8 @@ function getLawReferencesFromText($text) {
 
 'allmennaksjeloven',
 'aksjeloven',
+'miljøinformasjonsloven',
+
 
 /*
 				// Contextual references
@@ -434,7 +436,9 @@ function getLawReferencesFromText($text) {
 			// inkassoforskriftens § 1-2
 			// offentleglova § 5 første ledd og § 24 første ledd
 			// kommuneloven § 40 nr. 3 bokstav c første ledd
-			$regex = '/((' . preg_quote($nick) . 's?) ?§ ?[0-9]*(\-[0-9]*)*( [A-ZÆØÅ]\-[0-9]*)?( nr\. [0-9]*)?( [a-zæøå]* ledd)?( [a-zæøå]* punktum)?( bokstav [a-zæøå]*)?( [a-zæøå]* ledd)?)/';
+			// offentleglova § 32, fjerde ledd
+			// miljøinformasjonsloven § 2 (1) (b)
+			$regex = '/((' . preg_quote($nick) . 's?) ?§ ?[0-9]*(\-[0-9]*)*( [A-ZÆØÅ]\-[0-9]*)?( nr\. [0-9]*)?( [a-zæøå]* ledd)?( [a-zæøå]* punktum)?( bokstav [a-zæøå]*)?( [a-zæøå]* ledd)?( ?\([0-9a-zA-ZæøåÆØÅ]{0,4}\))*)/';
 			preg_match($regex, $text, $matches);
 			while (isset($matches[1])) {
 				if (isset($law['shortName'])) {
