@@ -78,6 +78,9 @@ table td {
 table {
 	border-collapse: collapse;
 }
+table tr.not-matching-law {
+    display:none;
+}
 </style>";
 }
 
@@ -101,7 +104,10 @@ $html .= '
 			<th>Dato - uttalelse (publisert)</th>
 			<th>Saksnummer</th>
 			<th>Uttalelse</th>
-			<th>Referanser til lov</th>
+			<th>
+			    Referanser til lov<br>
+			    <input id="law-filter" type="text"> - Filter
+			</th>
 			<th>Tittel</th>
 		</tr>
 	</thead>
@@ -140,7 +146,7 @@ foreach ($obj->items as $item) {
 		<th>' . $item['datoUttalelse'] . ' <span style="font-weight: normal;">(' . $item['datoPublisert'] . ')</span></th>
 		<td>' . implode(',<br>' . chr(10), $urls) . '</td>
 		<td>[<a href="' . $item['url'] . '">Til uttalelse</a>]</td>
-		<td>' . implode("<br>\n", $lovReferanser) . '</td>
+		<td class="law-ref">' . implode("<br>\n", $lovReferanser) . '</td>
 		<td>' . $item['tittel'] . '</td>
 	</tr>
 ';
@@ -154,6 +160,36 @@ foreach ($obj->items as $item) {
 
 $html .= '
 </table>
+
+<script>
+	var timeout;
+	document.getElementById(\'law-filter\').onkeyup = function() {
+		var search = this.value;
+		clearTimeout(timeout);
+		timeout = setTimeout(function() {
+			var trs = document.getElementsByTagName(\'tr\');
+			for (var i = 1; i < trs.length; i++) {
+				var tr = trs[i];
+				var notes = null;
+				for (var o = 0; o < tr.childNodes.length; o++) {
+					if (tr.childNodes[o].className == "law-ref") {
+						notes = tr.childNodes[o];
+						break;
+					}
+				}
+				if (notes !== null) {
+					var patt = new RegExp(search + \'[^0-9]\', \'g\');
+					if (search == \'\' || patt.test(notes.innerHTML)) {
+						tr.className = \'matching-law\';
+					}
+					else {
+						tr.className = \'not-matching-law\';
+					}
+				}
+			}
+		}, 250);
+	};
+</script>
 ';
 
 file_put_contents(__DIR__ . '/index.html', $html);
