@@ -425,6 +425,17 @@ function getLawReferencesFromText($text) {
 	);
 	foreach ($laws as $law) {
 		foreach ($law['nicknames'] as $nick) {
+            // offentleglova §§ 14 og 15
+            $regex = '/(' . $nick . ' §§ ([0-9]*) og ([0-9]*))/';
+            preg_match($regex, $text, $matches);
+            while (isset($matches[1])) {
+                $text = str_replace($matches[1],
+                    $nick . ' § ' . $matches[2]
+                    . ' og '
+                    . $nick . ' § ' . $matches[3] , $text);
+                preg_match($regex, $text, $matches);
+            }
+
 			// TEST DATA:
 			// forvaltningsloven § 24 første ledd
 			// forvaltningsloven § 34 annet ledd annet punktum
@@ -452,25 +463,16 @@ function getLawReferencesFromText($text) {
 				$text = str_replace($nick . ' og ', $nick . ' ', $text);
 				preg_match($regex, $text, $matches);
 			}
-
-			// offentleglova §§ 14 og 15
-			$regex = '/(' . $nick . ' §§ [0-9]* og [0-9]*)/';
-			preg_match($regex, $text, $matches);
-			while (isset($matches[1])) {
-				$lawRefs[] = $matches[1];
-				$text = str_replace($matches[1], '', $text);
-				preg_match($regex, $text, $matches);
-			}
 		}
 	}
 
 	if (str_contains($text, '§')) {
 		while (str_contains($text, '§')) {
 			$start = max(0, strpos($text, '§') - 50);
-			echo substr($text, $start, min(strlen($text) - $start, strpos($text, '§') + 100 - $start)) . "\n";
+			//echo substr($text, $start, min(strlen($text) - $start, strpos($text, '§') + 100 - $start)) . "\n";
 			$textBeforeParagraf = trim(substr($text, 0, strpos($text, '§')));
 			$wordBefore = trim(strrchr($textBeforeParagraf, ' '));
-			echo "\t\t$wordBefore\n";
+			//echo "\t\t$wordBefore\n";
 			global $lawsNotPresent;
 			if (!isset($lawsNotPresent[$wordBefore])) {
 				$lawsNotPresent[$wordBefore] = 0;
