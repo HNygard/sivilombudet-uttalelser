@@ -228,7 +228,8 @@ function readItems($html) {
 					$text = str_replace('Saksnummer: 209/2897', 'Saksnummer: 2009/2897', $text);
 					$text = str_replace('Saksnummer: 9/', 'Saksnummer: 2009/', $text);
 					$text = str_replace('Saksnummer: 8/', 'Saksnummer: 2008/', $text);
-					$text = str_replace('Saksnummer: 7/', 'Saksnummer: 2007/', $text);
+                    $text = str_replace('Saksnummer: 7/', 'Saksnummer: 2007/', $text);
+                    $text = str_replace('Saksnummer: 20/', 'Saksnummer: 2020/', $text);
 					$sivilombudsmannenSaksnummer = trim(substr($text, strlen('Saksnummer: ')));
 
 					// Clean up content
