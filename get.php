@@ -1,6 +1,6 @@
 <?php
 /**
- * This script downloads all uttalelser from Sivilombudsmannen
+ * This script downloads all uttalelser from Sivilombudet
  *
  * Based on code from Norske-postlister.no
  *
@@ -16,7 +16,7 @@ use Symfony\Component\DomCrawler\Crawler;
 
 $cacheTimeSeconds = 60 * 60 * 24 * 4;
 $cache_location = __DIR__ . '/cache';
-$baseUrl = 'https://www.sivilombudsmannen.no/uttalelser/';
+$baseUrl = 'https://www.sivilombudet.no/uttalelser/';
 $updateDate = date('d.m.Y H:i:s');
 
 $lawsNotPresent = array();
@@ -31,7 +31,7 @@ $lastPage = (int)end($items['pages']);
 $obj->pageCount = $lastPage;
 $obj->itemCount = 0;
 $obj->lastUpdated = $updateDate;
-$obj->sourceInfo = "Datasett hentet fra https://hnygard.github.io/sivilombudsmannen-uttalelser/, laget av @hallny / Norske-postlister.no. Kilde: $baseUrl";
+$obj->sourceInfo = "Datasett hentet fra https://hnygard.github.io/sivilombudet-uttalelser/, laget av @hallny / Norske-postlister.no. Kilde: $baseUrl";
 $obj->items = $items['items'];
 
 for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
@@ -42,7 +42,7 @@ for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
 
 $obj->itemCount = count($obj->items);
 
-file_put_contents(__DIR__ . '/sivilombudsmannen-uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
+file_put_contents(__DIR__ . '/sivilombudet-uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
 
 ksort($lawsNotPresent);
 foreach ($lawsNotPresent as $word => $count) {
@@ -53,7 +53,7 @@ foreach ($lawsNotPresent as $word => $count) {
 	echo "'$word',\n";
 }
 
-function htmlHeading($title = 'Sivilombudsmannens uttalelser') {
+function htmlHeading($title = 'Sivilombudets uttalelser') {
     return "<!DOCTYPE html>
 <html>
 <head>
@@ -86,16 +86,16 @@ table tr.not-matching-law {
 
 $html = htmlHeading() . "
 
-<h1>Sivilombudsmannens uttalelser</h1>\n";
+<h1>Sivilombudets uttalelser</h1>\n";
 $html .= "Laget av <a href='https://twitter.com/hallny'>@hallny</a> / <a href='https://norske-postlister.no'>Norske-postlister.no</a><br>\n";
-$html .= "<a href='https://github.com/HNygard/sivilombudsmannen-uttalelser/'>Kildekode for oppdatering av denne lista</a> (Github)<br><br>\n\n";
+$html .= "<a href='https://github.com/HNygard/sivilombudet-uttalelser/'>Kildekode for oppdatering av denne lista</a> (Github)<br><br>\n\n";
 $html .= '
 <ul>
 	<li>Antall uttalelser: ' . $obj->itemCount . '</li>
 	<li>Liste sist oppdatert: ' . $updateDate . '</li>
 	<li>Kilde: <a href="' . $baseUrl . '">' . $baseUrl . '</a></li>
-	<li>JSON-format: <a href="./sivilombudsmannen-uttalelser.json">sivilombudsmannen-uttalelser.json</a></li>
-	<li>CSV-format (Excel): <a href="./sivilombudsmannen-uttalelser.csv">sivilombudsmannen-uttalelser.csv</a></li>
+	<li>JSON-format: <a href="./sivilombudet-uttalelser.json">sivilombudet-uttalelser.json</a></li>
+	<li>CSV-format (Excel): <a href="./sivilombudet-uttalelser.csv">sivilombudet-uttalelser.csv</a></li>
 </ul>
 
 <table>
@@ -112,7 +112,7 @@ $html .= '
 		</tr>
 	</thead>
 ';
-$csv = "Datasett hentet fra;https://hnygard.github.io/sivilombudsmannen-uttalelser/;@hallny / Norske-postlister.no;Kilde;$baseUrl;Data hentet;$updateDate\n";
+$csv = "Datasett hentet fra;https://hnygard.github.io/sivilombudet-uttalelser/;@hallny / Norske-postlister.no;Kilde;$baseUrl;Data hentet;$updateDate\n";
 $csv .= "Dato - uttalelse;Dato - publisert;Saksnummer;Lenke uttalelse;Lovreferanse;Tittel\n";
 foreach ($obj->items as $item) {
 	$urls = array();
@@ -193,7 +193,7 @@ $html .= '
 ';
 
 file_put_contents(__DIR__ . '/index.html', $html);
-file_put_contents(__DIR__ . '/sivilombudsmannen-uttalelser.csv', $csv);
+file_put_contents(__DIR__ . '/sivilombudet-uttalelser.csv', $csv);
 
 
 function readItems($html) {
@@ -215,7 +215,7 @@ function readItems($html) {
 			});
 			$datoUttalelse = null;
 			$datoPublisert = null;
-			$sivilombudsmannenSaksnummer = null;
+			$sivilombudetSaksnummer = null;
 			$npUrl = null;
 			foreach ($footer_text as $text) {
 				if (str_starts_with($text, 'Dato for uttalelse: ')) {
@@ -230,25 +230,25 @@ function readItems($html) {
 					$text = str_replace('Saksnummer: 8/', 'Saksnummer: 2008/', $text);
                     $text = str_replace('Saksnummer: 7/', 'Saksnummer: 2007/', $text);
                     $text = str_replace('Saksnummer: 20/', 'Saksnummer: 2020/', $text);
-					$sivilombudsmannenSaksnummer = trim(substr($text, strlen('Saksnummer: ')));
+					$sivilombudetSaksnummer = trim(substr($text, strlen('Saksnummer: ')));
 
 					// Clean up content
-					$sivilombudsmannenSaksnummer2 = str_replace('sak ', '', $sivilombudsmannenSaksnummer);
-					$sivilombudsmannenSaksnummer2 = str_replace('Sak ', '', $sivilombudsmannenSaksnummer2);
-					$sivilombudsmannenSaksnummer2 = str_replace('tidl.', '', $sivilombudsmannenSaksnummer2);
-					$sivilombudsmannenSaksnummer2 = str_replace('tidligere ', '', $sivilombudsmannenSaksnummer2);
-					$sivilombudsmannenSaksnummer2 = str_replace(' og ', ' ', $sivilombudsmannenSaksnummer2);
-					$sivilombudsmannenSaksnummer2 = str_replace(', ', ' ', $sivilombudsmannenSaksnummer2);
-					$sivilombudsmannenSaksnummer2 = str_replace('(', '', $sivilombudsmannenSaksnummer2);
-					$sivilombudsmannenSaksnummer2 = str_replace(')', '', $sivilombudsmannenSaksnummer2);
+					$sivilombudetSaksnummer2 = str_replace('sak ', '', $sivilombudetSaksnummer);
+					$sivilombudetSaksnummer2 = str_replace('Sak ', '', $sivilombudetSaksnummer2);
+					$sivilombudetSaksnummer2 = str_replace('tidl.', '', $sivilombudetSaksnummer2);
+					$sivilombudetSaksnummer2 = str_replace('tidligere ', '', $sivilombudetSaksnummer2);
+					$sivilombudetSaksnummer2 = str_replace(' og ', ' ', $sivilombudetSaksnummer2);
+					$sivilombudetSaksnummer2 = str_replace(', ', ' ', $sivilombudetSaksnummer2);
+					$sivilombudetSaksnummer2 = str_replace('(', '', $sivilombudetSaksnummer2);
+					$sivilombudetSaksnummer2 = str_replace(')', '', $sivilombudetSaksnummer2);
 					$npUrl = array();
-					foreach (explode(' ', $sivilombudsmannenSaksnummer2) as $caseNum) {
+					foreach (explode(' ', $sivilombudetSaksnummer2) as $caseNum) {
 						$caseNum = trim($caseNum);
 						preg_match('/^(([0-9]{4})\/([0-9]*)(\-[0-9]*)?)$/', $caseNum, $matches);
 						if (!isset($matches[1])) {
 							var_dump($footer_text);
-							var_dump($sivilombudsmannenSaksnummer);
-							var_dump($sivilombudsmannenSaksnummer2);
+							var_dump($sivilombudetSaksnummer);
+							var_dump($sivilombudetSaksnummer2);
 							var_dump($caseNum);
 						}
 						$npUrl[$matches[1]]
@@ -269,7 +269,7 @@ function readItems($html) {
 			$item = array(
 				'datoUttalelse' => $datoUttalelse,
 				'datoPublisert' => $datoPublisert,
-				'sivilombudsmannenSaksnummer' => $sivilombudsmannenSaksnummer,
+				'sivilombudetSaksnummer' => $sivilombudetSaksnummer,
 				'url' => $smUrl,
 				'tittel' => $node->filter('h1')->first()->text('', true),
 				'beskrivelse' => $node->filter('.list-item__desc')->first()->text('', true),
@@ -356,6 +356,7 @@ function getLawReferencesFromText($text) {
 				'vegtrafikkloven',
 				'sivilombudsmannsloven',
 				'sivilombudsmannen',
+				'sivilombudet',
 				'ombudsmannsloven',
 				'sivilombudsmannsinstruksen',
 				'kommuneloven',
