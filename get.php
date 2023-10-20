@@ -554,8 +554,8 @@ function getUrlCachedUsingCurl($cacheTimeSeconds, $cache_file, $baseUri, $accept
 
     logInfo('   Response size: ' . strlen($body));
 
-    if (!str_starts_with($header, 'HTTP/1.1 200 OK')) {
-        if (str_starts_with($header, 'HTTP/1.1 404 Not Found') && file_exists($cache_file)) {
+    if (!str_starts_with($header, 'HTTP/2 200')) {
+        if (str_starts_with($header, 'HTTP/2 404 Not Found') && file_exists($cache_file)) {
             logInfo('  -> 404 Not Found. Using cache.');
             return file_get_contents($cache_file);
         }
