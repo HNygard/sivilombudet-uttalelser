@@ -199,7 +199,7 @@ file_put_contents(__DIR__ . '/sivilombudet-uttalelser.csv', $csv);
 function readItems($html) {
 	$crawler = new Crawler($html);
 	return array(
-		'items' => $crawler->filter('main section article.list--results.list-item')->each(function (Crawler $node, $i) {
+		'items' => $crawler->filter('main article.post-uttalelser')->each(function (Crawler $node, $i) {
 			$smUrl = $node->filter('a')->first()->attr('href');
 			if (!str_starts_with($smUrl, '')) {
 				throw new Exception('Unknown URL: ' . $smUrl);
@@ -281,7 +281,9 @@ function readItems($html) {
 			$item['uttalelse_lovRef'] = getLawReferencesFromText($item['uttalelse']);
 			return $item;
 		}),
-		'pages' => $crawler->filter('.pagination__pages li')->each(function (Crawler $node, $i) {
+		'pages' => $crawler->filter('.pagination li')
+			->reduce(fn (Crawler $n) => $n->text('', true) !== 'Neste')
+			->each(function (Crawler $node, $i) {
 			return $node->text('', true);
 		})
 	);
@@ -444,7 +446,40 @@ function getLawReferencesFromText($text) {
 'allmennaksjeloven',
 'aksjeloven',
 'miljøinformasjonsloven',
-
+// 780
+'vannressursloven',
+// 624
+'trygderettsloven',
+// 624
+'straffeloven',
+// 312
+'sivilombudsloven',
+// 156
+'merverdiavgiftsforskriften',
+// 156
+'kraftberedskapsforskriften',
+// 156
+'(vannressursloven)',
+// 624
+'arkivforskrifta',
+// 156
+'arkivforskriften',
+// 156
+'arkivlova',
+// 156
+'beskyttelsesinstruksen',
+// 2028
+'damsikkerhetsforskriften',
+// 624
+'forskriften',
+// 312
+'forvaltningslov',
+// 156
+'forvaltningslovforskriften',
+// 780
+'helsevernforskriften',
+// 156
+'(arkivforskriften)',
 
 /*
 				// Contextual references
