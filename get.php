@@ -42,6 +42,10 @@ for ($pageNum = 2; $pageNum <= $lastPage; $pageNum++) {
 
 $obj->itemCount = count($obj->items);
 
+if ($obj->itemCount < 1000) {
+	throw new Exception('Too few items found: ' . $obj->itemCount);
+}
+
 file_put_contents(__DIR__ . '/sivilombudet-uttalelser.json', json_encode($obj, JSON_PRETTY_PRINT ^ JSON_UNESCAPED_SLASHES ^ JSON_UNESCAPED_UNICODE));
 
 ksort($lawsNotPresent);
@@ -210,9 +214,12 @@ function readItems($html) {
 			$articleHtml = getUrlCachedUsingCurl($cacheTimeSeconds, $cache_location . '/' . $cacheFile, $smUrl);
 			$crawlerArt = new Crawler($articleHtml);
 
-			$footer_text = $node->filter('.list-item__footer span')->each(function (Crawler $node, $i) {
+			$footer_text = $node->filter('.post-meta p')->each(function (Crawler $node, $i) {
 			    return $node->text('', true);
 			});
+			if (empty($footer_text)) {
+				throw new Exception('No footer text found.');
+			}
 			$datoUttalelse = null;
 			$datoPublisert = null;
 			$sivilombudetSaksnummer = null;
@@ -230,6 +237,7 @@ function readItems($html) {
 					$text = str_replace('Saksnummer: 8/', 'Saksnummer: 2008/', $text);
                     $text = str_replace('Saksnummer: 7/', 'Saksnummer: 2007/', $text);
                     $text = str_replace('Saksnummer: 20/', 'Saksnummer: 2020/', $text);
+                    $text = str_replace('Saksnummer: 2024/1381, 2024/ 1817 og 2024/2588', 'Saksnummer: 2024/1381 2024/1817 2024/2588', $text);
 					$sivilombudetSaksnummer = trim(substr($text, strlen('Saksnummer: ')));
 
 					// Clean up content
@@ -259,6 +267,12 @@ function readItems($html) {
 					$datoPublisert = explode('.', trim(substr($text, strlen('Publisert: '))));
 					$datoPublisert = mktime(0, 0, 0, $datoPublisert[1], $datoPublisert[0], $datoPublisert[2]);
 					$datoPublisert = date('d.m.Y', $datoPublisert);
+				}
+				elseif (
+					$text == 'Dato for uttalelse:'
+					|| $text == 'Saksnummer:'
+				) {
+					// Ignore
 				}
 				else {
 					var_dump($footer_text);
